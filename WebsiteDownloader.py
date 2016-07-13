@@ -1,36 +1,43 @@
-''' It still can't create a folder to keep the html files.
-    line 29: in getUrls,  hrf = lnk in href follows error
-    TypeError: argument of type 'NoneType' is not iterable'''
-
 import requests, os, re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 def getUrls(name, url):
     
-    res = requests.get(url)
+    req = requests.get(url)
     
-    # Catching Exceptions
+    # Checking the request status of the url
     try:
-        res.raise_for_status()
+        req.raise_for_status()
     except Exception as e:
         print('Problem: %s'%(e))
+
+    #Parsing the name/ href to make a folder if needed
+    namepar = name.split('/')
+    filename = namepar[-1]+'.html'
     
-    # Saving file in the hard-drive
+    # Saving html files in the hard-drive
     try:
-        file = open(name+'.html','wb')
-        for chunk in res.iter_content(10000):
+        file = open(filename,'wb')
+        for chunk in req.iter_content(10000):
             file.write(chunk)
         file.close()
+        filepath = '.\\'+'\\'.join(namepar[:-1])
+        if not os.path.exists(filepath):
+            os.path.makedirs(filepath)
+        os.rename(filename,filepath+'\\'+filename)
     except Exception:
-        print()
+        print('Let it go!')
     
     # Parsing and getting urls from the page
-    soup = BeautifulSoup(res.text, 'html.parser')
+    soup = BeautifulSoup(req.text, 'html.parser')
     links = soup.find_all('a')
     for link in links:
         href = link.get('href')
-        hrf = lnk in href
+        try:
+            hrf = lnk in href
+        except TypeError:
+            hrf = False
         upar = urlparse(href)
         if not href in [None, lnk] and not 'login' in href and (re.search(r'(http(s?):|www.|mailto:)?',href)==None or hrf == True):
             if hrf:
