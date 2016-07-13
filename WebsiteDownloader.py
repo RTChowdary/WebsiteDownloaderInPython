@@ -1,3 +1,4 @@
+
 import requests, os, re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -6,23 +7,25 @@ def getUrls(name, url):
     
     req = requests.get(url)
     
-    # Checking the request status of the url
+    # Catching Exceptions
     try:
         req.raise_for_status()
     except Exception as e:
         print('Problem: %s'%(e))
 
-    #Parsing the name/ href to make a folder if needed
     namepar = name.split('/')
-    filename = namepar[-1]+'.html'
+    if not namepar[-1].endswith('.html'):
+        filename = namepar[-1]+'.html'
     
-    # Saving html files in the hard-drive
+    # Saving file in the hard-drive
     try:
         file = open(filename,'wb')
         for chunk in req.iter_content(10000):
             file.write(chunk)
         file.close()
         filepath = '.\\'+'\\'.join(namepar[:-1])
+
+        # Creating the path for folders and files
         if not os.path.exists(filepath):
             os.path.makedirs(filepath)
         os.rename(filename,filepath+'\\'+filename)
@@ -34,9 +37,9 @@ def getUrls(name, url):
     links = soup.find_all('a')
     for link in links:
         href = link.get('href')
-        try:
+        if href != None:
             hrf = lnk in href
-        except TypeError:
+        else:
             hrf = False
         upar = urlparse(href)
         if not href in [None, lnk] and not 'login' in href and (re.search(r'(http(s?):|www.|mailto:)?',href)==None or hrf == True):
@@ -44,15 +47,18 @@ def getUrls(name, url):
                 url = href
                 href = upar.path[1:]
                 if href.endswith('/'): href = href[:-1]
+                print('True')
             else:
                 if href.startswith('/'): url = url + href[1:]
                 else: url = url + href
-            if not url in urls:
+                print('False')
+            if not url in urls and not href.find('.pdf'or'.epub'or'.docx')!=-1:
                 urls.append(url)
                 getUrls(href, url)
+        print(url)
             
 # Calling the function to get urls from a web page to download content in it
 urls = list()
-lnk = 'https://automatetheboringstuff.com/'
+lnk = 'http://eloquentjavascript.net/'
 urls.append(lnk)
 getUrls('index', lnk)
